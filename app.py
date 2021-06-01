@@ -15,7 +15,8 @@ from statistics import mean
 print(" Done.")
 
 def begin():
-    make_dirs("data")
+    if not os.path.exists("data"):
+        os.makedirs("data")
     folder = input("\n Folder name: ").strip()
     if folder not in get_folders("data"):
         print("Error: The folder was not found.")
@@ -38,7 +39,7 @@ def analyze(folder, extensions, threshold=80):
         # code_lines = len(set(contents.split("\n")))
         for compare in filenames:
             if filename != compare:
-                same = similarity2(filepath, f"data/{folder}/{compare}")
+                same = originality(filepath, f"data/{folder}/{compare}")
                 data.update({compare: same})
                 values = []
                 for value in same.values():
@@ -61,7 +62,7 @@ def word_frequency(contents):
             frequency.update({word: sum})
     return frequency
 
-def similarity2(original, compare):
+def originality(original, compare):
     duplicates = {}
     data1, data2 = "", ""
     with open(original, "r") as file1:
@@ -69,7 +70,6 @@ def similarity2(original, compare):
     with open(compare, "r") as file2:
         data2 = pad(file2.read())
     
-    pairs = {"(": ")", "{": "}", "[": "]", "\"": "\"", "'": "'" }
     for line1 in data1.split("\n"):
         rate = 0
         words1 = line1.split(" ")
@@ -77,50 +77,12 @@ def similarity2(original, compare):
         # words1.sort()
         if len(set(words1)) > 0:
             line = ""
-            # diff1_temp = []
-            # diff2_temp = []
             for line2 in data2.split("\n"):
-                pair = []
                 words2 = line2.split(" ")
                 words2 = [i for i in words2 if i.strip() != ""]
-                # words2.sort()
                 if len(set(words2)) > 0:
-                    paired = []
-                    diff1 = [i for i in words1]
-                    for item in words2:
-                        if item in diff1:
-                            if item in paired:
-                                paired.remove(item)
-                                diff1.remove(item)
-                            else:
-                                if len(item) > 1 and item in diff1:
-                                    diff1.remove(item)
-                            for pair in pairs.keys():
-                                if pair in item:
-                                    paired.append(pairs.get(pair, ""))
-                                    if item in diff1:
-                                        diff1.remove(item)
-                            else:
-                                if item in diff1:
-                                    diff1.remove(item)
-                    paired = []
-                    diff2 = [i for i in words2]
-                    for item in words1:
-                        if item in diff2:
-                            if item in paired:
-                                paired.remove(item)
-                                diff2.remove(item)
-                            else:
-                                if len(item) > 1 and item in diff2:
-                                    diff2.remove(item)
-                            for pair in pairs.keys():
-                                if pair in item:
-                                    paired.append(pairs.get(pair, ""))
-                                    if item in diff2:
-                                        diff2.remove(item)
-                            else:
-                                if item in diff2:
-                                    diff2.remove(item)
+                    diff1 = difference(words1, words2)
+                    diff2 = difference(words2, words1)
                     words3 = []
                     words3.extend(words1)
                     words3.extend(words2)
@@ -132,15 +94,6 @@ def similarity2(original, compare):
                         if temp > rate:
                             rate = temp
                             line = line2
-                            # diff1_temp = [i for i in diff1]
-                            # diff2_temp = [i for i in diff2]
-            """ if rate < 100 and "Maniego" in original and "Maniego" in compare:
-                print("")
-                print(" 1:", line1)
-                print(" 2:", line)
-                print(" 3:", diff1_temp)
-                print(" 4:", diff2_temp)
-                print(" 5:", rate) """
             duplicates.update({line1: {"0": line, "1": rate}})
     return duplicates
 
@@ -151,6 +104,28 @@ def pad(string):
     for item in symbols:
         padded = padded.replace(item, f" {item} ")
     return padded
+
+def difference(words, diff):
+    paired = []
+    diff = [i for i in diff]
+    pairs = {"(": ")", "{": "}", "[": "]", "\"": "\"", "'": "'" }
+    for item in words:
+        if item in diff:
+            if item in paired:
+                paired.remove(item)
+                diff.remove(item)
+            else:
+                if len(item) > 1 and item in diff:
+                    diff.remove(item)
+            for pair in pairs.keys():
+                if pair in item and not ("\\\"" in item) and not ("\\\'" in item):
+                    paired.append(pairs.get(pair, ""))
+                    if item in diff:
+                        diff.remove(item)
+            else:
+                if item in diff:
+                    diff.remove(item)
+    return diff
 
 # file/folder io
 def read_file(filepath):
@@ -172,10 +147,6 @@ def get_filenames(path, extensions=[]):
 
 def file_exists(filepath):
     return os.path.exists(filepath)
-
-def make_dirs(filepath):
-    if not os.path.exists(filepath):
-        os.makedirs(filepath)
 
 
 if __name__ == '__main__':
