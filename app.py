@@ -48,17 +48,16 @@ def analyze(folder="", extensions="", threshold=80, control_file="control_file")
         print("AberoWarning: 'control_file' parameter must be a string.")
         threshold = 80
     
+    print(" Analyzing files...")
     
     prev = ""
     extensions = extensions.split(",")
     analysis = Arkivist(f"data/{folder}/analysis.json")
     filenames = get_filenames(f"data/{folder}", extensions)
     for index, filename in enumerate(filenames):
+        data = {}
         if control_file not in filename:
-            count = index + 1
-            print(f"\n File #{count}: {filename}")
             filepath = f"data/{folder}/{filename}"
-            data = {}
             # save contents
             # contents = read_file(filepath)
             # code_lines = len(set(contents.split("\n")))
@@ -69,16 +68,37 @@ def analyze(folder="", extensions="", threshold=80, control_file="control_file")
                 if filename != compare:
                     result = similarity(filepath, f"data/{folder}/{compare}")
                     data.update({uid: result})
-                    values = []
-                    for value in result.values():
-                        rate = value.get("1", 0)
-                        if rate < threshold:
-                            rate = 0
-                        values.append(rate)
-                    avg = round(mean(values), 2)
-                    if avg > 0 and uid != "control":
-                        print(f" - {avg:.2f}% {compare}")
-        analysis.set(uid, data)
+            analysis.set(filename, data)
+        
+    count = 0
+    analysis.reload()
+    for filename, data in analysis.items():
+        count += 1
+        print(f"\n File #{count}: {filename}")
+        control = data.get("control", {})
+        control_avg = average(list(control.values()), threshold)
+        duplicates = [0]
+        for compare, result in data.items():
+            if compare != "control":
+                avg = average(list(result.values()), threshold)
+                avg = avg - control_avg
+                if avg > 0:
+                    duplicates.append(avg)
+                    print(f" - {avg:.2f}% {compare}")
+        originality = (100 - max(duplicates))
+        print(f" * Originality Rating: {originality:.2f}%")
+                     
+
+def average(results, threshold):
+    if len(results) == 0:
+        return 0
+    values = []
+    for value in results:
+        rate = value.get("1", 0)
+        if rate < threshold:
+            rate = 0
+        values.append(rate)
+    return round(mean(values), 2)
 
 def word_frequency(contents):
     frequency = {}
@@ -91,49 +111,59 @@ def word_frequency(contents):
     return frequency
 
 def similarity(original, compare):
+    """ Compare original file to other files """
     duplicates = {}
     data1, data2 = "", ""
     with open(original, "r") as file1:
-        data1 = pad(file1.read())
+        data1 = file1.read()
     with open(compare, "r") as file2:
-        data2 = pad(file2.read())
+        data2 = file2.read()
+        
+        
     
     for line1 in data1.split("\n"):
         rate = 0
-        words1 = line1.split(" ")
+        words1 = pad(line1).split(" ")
         words1 = [i for i in words1 if i.strip() != ""]
         # words1.sort()
         if len(set(words1)) > 0:
             line = ""
             for line2 in data2.split("\n"):
-                words2 = line2.split(" ")
+                words2 = pad(line2).split(" ")
                 words2 = [i for i in words2 if i.strip() != ""]
                 if len(set(words2)) > 0:
-                    diff1 = difference(words1, words2)
-                    diff2 = difference(words2, words1)
-                    words3 = []
-                    words3.extend(words1)
-                    words3.extend(words2)
-                    remain = len(diff1) + len(diff2)
-                    if remain == 0:
+                    if line1.strip() == line2.strip():
                         rate = 100
+                        line = line2
                     else:
-                        temp = ((len(words3) - remain) / len(words3)) * 100
-                        if temp > rate:
-                            rate = temp
+                        diff1 = difference(words2, words1)
+                        diff2 = difference(words1, words2)
+                        words3 = []
+                        words3.extend(words1)
+                        words3.extend(words2)
+                        remain = len(diff1) + len(diff2)
+                        if remain == 0:
+                            rate = 100
                             line = line2
+                        else:
+                            temp = ((len(words3) - remain) / len(words3)) * 100
+                            if temp > rate:
+                                rate = temp
+                                line = line2
             duplicates.update({line1: {"0": line, "1": rate}})
     return duplicates
 
 def pad(string):
+    """ Decongest statements """
     padded = string.replace("\r", "").replace("\t", " ")
-    symbols = [ "#", "%", "*", ")", "+", "-", "=",
+    symbols = ["#", "%", "*", ")", "+", "-", "=",
                 "{", "}", "]", "\"", "'", "<", ">" ]
     for item in symbols:
         padded = padded.replace(item, f" {item} ")
-    return padded
+    return padded.replace("(", "( ")
 
-def difference(words, diff):
+def difference(diff, words):
+    
     paired = []
     diff = [i for i in diff]
     pairs = {"(": ")", "{": "}", "[": "]", "\"": "\"", "'": "'" }
