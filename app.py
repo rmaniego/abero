@@ -14,43 +14,71 @@ from statistics import mean
 
 print(" Done.")
 
-def begin():
+def analyze(folder="", extensions="", threshold=80, control_file="control_file"):
+    # initialize data folder
     if not os.path.exists("data"):
         os.makedirs("data")
+
+    # if folder is not set,
+    # ask for folder inside the data directory
     folder = input("\n Folder name: ").strip()
     if folder not in get_folders("data"):
         print("Error: The folder was not found.")
         return
-    extensions = "py" # csv
-    analyze(folder, extensions)
 
-def analyze(folder, extensions, threshold=80):
+    # do not hard code
+    extensions = "py" # csv
+    
+    if not isinstance(folder, str):
+        print("AberoError: 'folder' parameter must be a string.")
+        return
+    
+    if not isinstance(folder, str):
+        print("AberoError: 'extensions' parameter must be a string.")
+        return
+
+    if not isinstance(threshold, int):
+        print("AberoWarning: 'threshold' parameter must be an integer.")
+        threshold = 80
+    if not (1 <= threshold <= 100):
+        print("AberoWarning: 'threshold' parameter must be an integer between 1-100.")
+        threshold = 80
+    
+    if not isinstance(control_file, str):
+        print("AberoWarning: 'control_file' parameter must be a string.")
+        threshold = 80
+    
+    
+    prev = ""
     extensions = extensions.split(",")
     analysis = Arkivist(f"data/{folder}/analysis.json")
-    prev = ""
     filenames = get_filenames(f"data/{folder}", extensions)
     for index, filename in enumerate(filenames):
-        count = index + 1
-        print(f"\n File #{count}: {filename}")
-        filepath = f"data/{folder}/{filename}"
-        data = {}
-        # save contents
-        # contents = read_file(filepath)
-        # code_lines = len(set(contents.split("\n")))
-        for compare in filenames:
-            if filename != compare:
-                same = originality(filepath, f"data/{folder}/{compare}")
-                data.update({compare: same})
-                values = []
-                for value in same.values():
-                    rate = value.get("1", 0)
-                    if rate < threshold:
-                        rate = 0
-                    values.append(rate)
-                avg = round(mean(values), 2)
-                if avg > 0:
-                    print(f" - {avg:.2f}% {compare}")
-        analysis.set(filename, data)
+        if control_file not in filename:
+            count = index + 1
+            print(f"\n File #{count}: {filename}")
+            filepath = f"data/{folder}/{filename}"
+            data = {}
+            # save contents
+            # contents = read_file(filepath)
+            # code_lines = len(set(contents.split("\n")))
+            for compare in filenames:
+                uid = compare
+                if control_file in compare:
+                    uid = "control"
+                if filename != compare:
+                    result = similarity(filepath, f"data/{folder}/{compare}")
+                    data.update({uid: result})
+                    values = []
+                    for value in result.values():
+                        rate = value.get("1", 0)
+                        if rate < threshold:
+                            rate = 0
+                        values.append(rate)
+                    avg = round(mean(values), 2)
+                    if avg > 0 and uid != "control":
+                        print(f" - {avg:.2f}% {compare}")
+        analysis.set(uid, data)
 
 def word_frequency(contents):
     frequency = {}
@@ -62,7 +90,7 @@ def word_frequency(contents):
             frequency.update({word: sum})
     return frequency
 
-def originality(original, compare):
+def similarity(original, compare):
     duplicates = {}
     data1, data2 = "", ""
     with open(original, "r") as file1:
@@ -150,4 +178,4 @@ def file_exists(filepath):
 
 
 if __name__ == '__main__':
-    begin()
+    analyze()

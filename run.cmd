@@ -1,2 +1,2 @@
 cls
-py -c "import app; app.begin();"
+py -c "import app; app.analyze()"
