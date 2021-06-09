@@ -1,0 +1,4 @@
+{
+    "binary": ["jpg", "png", "gif", "bmp", "tiff", "psd", "mp4", "mkv", "avi", "mov", "mpg", "vob", "mp3", "aac", "wav", "flac", "ogg", "mka", "wma", "pdf", "doc", "xls", "ppt", "docx", "odt", "zip", "rar", "7z", "tar", "iso", "mdb", "accde", "frm", "sqlite", "exe", "dll", "so", "class"],
+   "text": ["html", "xml", "css", "svg", "json", "c", "cpp", "h", "cs", "js", "py", "java", "rb", "pl", "php", "sh", "txt", "tex", "markdown", "asciidoc", "rtf", "ps", "ini", "cfg", "rc", "reg", "csv", "tsv"]
+}

@@ -3,7 +3,7 @@
     File analysis tool
 """
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 
 print(f"\nAbero v{VERSION}")
 
@@ -15,20 +15,31 @@ import re
 import sys
 import zipfile
 import argparse
+from statistics import mean
+from itertools import groupby
 
 from arkivist import Arkivist
-from statistics import mean
 
 print("Done.")
 
-def analyze(directory, threshold=80, template=None, skipnames=0, unzip=0, reset=0):
-
-    # do not hard code
-    extension = "py" # csv
+def analyze(directory, extension="txt", threshold=80, template=None, skipnames=0, unzip=0, reset=0):
     
     if not isinstance(directory, str):
-        print("AberoError: 'directory' parameter must be a string.")
+        print("\nAberoError: 'directory' parameter must be a string.")
         return
+    
+    if not isinstance(extension, str):
+        print("\nAberoWarning: 'extension' parameter must be a string.")
+    
+    text_based = -1
+    extensions = Arkivist("extensions.json")
+    if extension in extensions.get("text", ["txt"]):
+        text_based = 1
+    elif extension in extensions.get("binary", []):
+        text_based = 0
+        print(f"AberoWarning: The `{extension}` is a binary file, a separate analyzer will be used.")
+    else:
+        print(f"AberoWarning: The `{extension}` is currently unsupported for analysis, errors might be encountered during execution.")
 
     validate(threshold, 1, 100, 80)
     validate(skipnames, 0, 1, 0)
@@ -38,14 +49,14 @@ def analyze(directory, threshold=80, template=None, skipnames=0, unzip=0, reset=
     template_filename = ""
     if isinstance(template, str):
         if not check_path(template):
-            print("AberoWarning: Template file was not found.")
+            print("\nAberoWarning: Template file was not found.")
             template = None
     
     if unzip == 1:
         print("\nUnzipping files:")
         if not check_path(f"{directory}"):
             os.makedirs(f"{directory}")
-        for filename in get_filenames(directory, ["zip"]):
+        for filename in get_filenames(directory, "zip"):
             print(f" - {filename}")
             extract(f"{directory}/{filename}", f"{directory}")
 
@@ -59,10 +70,10 @@ def analyze(directory, threshold=80, template=None, skipnames=0, unzip=0, reset=
     analysis = Arkivist(f"{directory}/analysis.json")
     if reset == 1:
         analysis.clear()
-    filenames = get_filenames(f"{directory}", [extension])
+    filenames = get_filenames(f"{directory}", extension)
     for index, filename in enumerate(filenames):
         if template_filename != filename:
-            codelines = {}
+            duplicates = {}
             filepath = f"{directory}/{filename}"
             for compare in filenames:
                 uid = compare
@@ -76,11 +87,14 @@ def analyze(directory, threshold=80, template=None, skipnames=0, unzip=0, reset=
                             if len(common) >= 15:
                                 skip = True
                     if not skip:
-                        result = similarity(filepath, f"{directory}/{compare}")
-                        codelines.update({uid: result})
-            
+                        if text_based == 1:
+                            result = similarity(filepath, f"{directory}/{compare}")
+                        else:
+                            result = bin_diff(filepath, f"{directory}/{compare}")
+                        duplicates.update({uid: result})
             metadata = analysis.get(filename, {})
-            metadata.update({"codelines": codelines})
+            metadata.update({"text": text_based})
+            metadata.update({"duplicates": duplicates})
             analysis.set(filename, metadata)
     
     print("\nGenerating report...")
@@ -89,18 +103,34 @@ def analyze(directory, threshold=80, template=None, skipnames=0, unzip=0, reset=
     for filename, metadata in analysis.show().items():
         count += 1
         print(f"\n File #{count}: {filename}")
-        codelines = metadata.get("codelines", {})
-        control = codelines.get("control", {})
-        control_avg = average(list(control.values()), threshold)
-        duplicates = [0]
-        for compare, result in codelines.items():
-            if compare != "template":
-                avg = average(list(result.values()), threshold)
-                avg = avg - control_avg
-                if avg > 0:
-                    duplicates.append(avg)
-                    print(f" - {avg:.2f}% {compare}")
-        originality = (100 - max(duplicates))
+        originality = 0
+        duplicates = metadata.get("duplicates", {})
+        control = duplicates.get("template", {})
+        if metadata.get("text", -1) == 1:
+            duplication = [0]
+            control_avg = average(list(control.values()), threshold)
+            for compare, result in duplicates.items():
+                if compare != "template":
+                    avg = average(list(result.values()), threshold)
+                    avg = avg - control_avg
+                    if avg > 0:
+                        duplication.append(avg)
+                        print(f" - {avg:.2f}% {compare}")
+            originality = (100 - max(duplication))
+        else:
+            duplication = [0]
+            control_matches = duplicates.get("template", {}).get("matches", [])
+            for compare, result in duplicates.items():
+                if compare != "template":
+                    duplicated = []
+                    matches = result.get("matches", [])
+                    duplicated = [x for x in matches if x not in control_matches]
+                    file_length = result.get("size", 1)
+                    avg = (len(duplicated) / file_length) * 100
+                    if avg > 0:
+                        duplication.append(avg)
+                        print(f" - {avg:.2f}% {compare}")
+            originality = 100 - max(duplication)
         print(f" * Originality Rating: {originality:.2f}%")
         statistics = metadata.get("statistics", {})
         statistics.update({"originality": originality})
@@ -161,6 +191,20 @@ def similarity(original, compare):
             duplicates.update({line1: {"0": line, "1": rate}})
     return duplicates
 
+def bin_diff(original, compare):
+    # https://stackoverflow.com/a/15798718/4943299
+    matches = []
+    with open(original, "rb") as file1:
+        content1 = file1.read()
+        with open(compare, "rb") as file2:
+            content2 = file2.read()
+            for k, g in groupby(range(min(len(content1), len(content2))), key=lambda i: content1[i] == content2[i]):
+                if k:
+                    pos = next(g)
+                    length = len(list(g)) + 1
+                    matches.append((pos, length))
+    return dict({"size": len(content1), "matches": matches})
+
 def pad(string):
     """ Decongest statements """
     padded = string.replace("\r", "").replace("\t", " ")
@@ -171,7 +215,6 @@ def pad(string):
     return padded.replace("(", "( ")
 
 def difference(diff, words):
-    
     paired = []
     diff = [i for i in diff]
     pairs = {"(": ")", "{": "}", "[": "]", "\"": "\"", "'": "'" }
@@ -232,10 +275,10 @@ def check_path(path):
         return False
     return os.path.exists(path)
 
-def get_filenames(path, extensions=[]):
+def get_filenames(path, extension):
     filenames = []
     for filepath in os.listdir(path):
-        if filepath.split(".")[-1].lower() in extensions:
+        if filepath.split(".")[-1].lower() == extension:
             filenames.append(filepath)
     return filenames
 
@@ -251,6 +294,12 @@ parser.add_argument("-d",
                     type=str,
                     help="Directory of the files.",
                     required=True)
+
+parser.add_argument("-e",
+                    "--extension",
+                    metavar="extension",
+                    type=str,
+                    help="Allowed file extension to be analyzed.")
 
 parser.add_argument("-c",
                     "--control",
@@ -290,6 +339,10 @@ if not check_path(directory):
     print(f"\nAberoError: The directory was not found: {directory}")
     sys.exit(0)
 
+extension = args.extension
+if extension is None:
+    extension = "txt"
+
 # set the threshold level
 threshold = default(args.threshold, 1, 100, 80)
 
@@ -309,4 +362,4 @@ unzip = default(args.unzip, 0, 1, 0)
 # set the clear data flag
 reset = default(args.reset, 0, 1, 0)
 
-analyze(directory, threshold=threshold, template=template, skipnames=skipnames, unzip=unzip, reset=reset)
+analyze(directory, extension=extension, threshold=threshold, template=template, skipnames=skipnames, unzip=unzip, reset=reset)
