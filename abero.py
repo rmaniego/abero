@@ -3,7 +3,7 @@
     File analysis tool
 """
 
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 
 print(f"\nAbero v{VERSION}")
 
@@ -32,7 +32,7 @@ def analyze(directory, extension="txt", threshold=80, template=None, skipnames=0
         print("\nAberoWarning: 'extension' parameter must be a string.")
     
     text_based = -1
-    extensions = Arkivist("extensions.json")
+    extensions = Arkivist("resources/extensions.json")
     if extension in extensions.get("text", ["txt"]):
         text_based = 1
     elif extension in extensions.get("binary", []):
