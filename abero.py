@@ -152,10 +152,16 @@ def similarity(original, compare):
     """ Compare original file to other files """
     duplicates = {}
     data1, data2 = "", ""
-    with open(original, "r") as file1:
-        data1 = file1.read()
-    with open(compare, "r") as file2:
-        data2 = file2.read()
+    with open(original, "r", encoding="utf-8") as file1:
+        try:
+            data1 = file1.read()
+        except:
+            data1 = ""
+    with open(compare, "r", encoding="utf-8") as file2:
+        try:
+            data2 = file2.read()
+        except:
+            data2 = ""
         
         
     
