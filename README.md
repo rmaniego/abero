@@ -2,6 +2,7 @@
 
 # abero
 Analyze multiple files for similarity and/or uniqueness.
+Finding similarities of works duplicated from one or more part of different works to create a seemingly unique one can be difficult because of different strategies being used, but this can be done better with a software like Abero.
 
 ## Requirements
 - [Arkivist](https://pypi.org/project/arkivist/) `pip install arkivist`
@@ -38,3 +39,6 @@ Control file contains words or phrases, checked line-by-line, that are deem allo
 - [x] Threshold levels
 - [x] Skip / group compare
 - [ ] Diff tool, content viewer
+
+## Did you know?
+The repository name `abero` was inspired from the words aberrant and abero (Latin), which may mean deviating or being absent.
