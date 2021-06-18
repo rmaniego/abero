@@ -22,7 +22,7 @@ from arkivist import Arkivist
 
 print("Done.")
 
-def analyze(directory, extension="txt", threshold=80, template=None, skipnames=0, unzip=0, reset=0):
+def analyze(directory, extension="txt", threshold=80, template=None, skipnames=0, group=0, unzip=0, reset=0):
     
     if not isinstance(directory, str):
         print("\nAberoError: 'directory' parameter must be a string.")
@@ -41,10 +41,11 @@ def analyze(directory, extension="txt", threshold=80, template=None, skipnames=0
     else:
         print(f"AberoWarning: The `{extension}` is currently unsupported for analysis, errors might be encountered during execution.")
 
-    validate(threshold, 1, 100, 80)
-    validate(skipnames, 0, 1, 0)
-    validate(unzip, 0, 1, 0)
-    validate(reset, 0, 1, 0)
+    threshold = validate(threshold, 1, 100, 80)
+    skipnames = validate(skipnames, 0, 1, 0)
+    group = validate(group, 0, 1, 0)
+    unzip = validate(unzip, 0, 1, 0)
+    reset = validate(reset, 0, 1, 0)
     
     template_filename = ""
     if isinstance(template, str):
@@ -82,10 +83,17 @@ def analyze(directory, extension="txt", threshold=80, template=None, skipnames=0
                 if filename != compare:
                     skip = False
                     if skipnames == 1:
+                        cid = None
                         common = common_string(filename, compare)
                         if common in compare:
-                            if len(common) >= 15:
+                            if len(common) >= 10:
                                 skip = True
+                        if group == 1:
+                            skip = True
+                            rcommon = common_string(filename, compare, reverse=True)
+                            if rcommon != "":
+                                if rcommon in compare:
+                                    skip = False
                     if not skip:
                         if text_based == 1:
                             result = similarity(filepath, f"{directory}/{compare}")
@@ -252,18 +260,27 @@ def validate(value, minimum, maximum, fallback):
     return value
 
 def extract(path, destination):
-    with zipfile.ZipFile(path, "r") as zip:
-        zip.extractall(destination)
+    try:
+        with zipfile.ZipFile(path, "r") as zip:
+            zip.extractall(destination)
+    except:
+        print(f"\nAberoWarning: Error in processing ZIP file: {path}")
+        pass
 
-def common_string(original, compare):
+def common_string(original, compare, reverse=False):
+    if reverse:
+        original = "".join(list(reversed(original.replace(f".{extension}", "").strip())))
+        compare = "".join(list(reversed(compare.replace(f".{extension}", "").strip())))
     common = []
     limit = min((len(original), len(compare)))
     for i in range(0, limit):
         if original[i] != compare[i]:
             break
         common.append(original[i])
-    # print("".join(common))
+    if reverse:
+        return "".join(list(reversed(common)))
     return "".join(common)
+
 
 def default(value, minimum, maximum, fallback):
     if value is not None:
@@ -331,6 +348,12 @@ parser.add_argument("-s",
                     type=int,
                     help="Skip files with common filenames.")
 
+parser.add_argument("-g",
+                    "--group",
+                    metavar="group",
+                    type=int,
+                    help="Only compare when files has the same unique identifier.")
+
 parser.add_argument("-r",
                     "--reset",
                     metavar="reset",
@@ -362,10 +385,13 @@ if template is not None:
 # set the skip names flag
 skipnames = default(args.skipnames, 0, 1, 0)
 
+# set the group flag
+group = default(args.group, 0, 1, 0)
+
 # set the unzip flag
 unzip = default(args.unzip, 0, 1, 0)
 
 # set the clear data flag
 reset = default(args.reset, 0, 1, 0)
 
-analyze(directory, extension=extension, threshold=threshold, template=template, skipnames=skipnames, unzip=unzip, reset=reset)
+analyze(directory, extension=extension, threshold=threshold, template=template, skipnames=skipnames, group=group, unzip=unzip, reset=reset)
