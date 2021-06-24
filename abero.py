@@ -1,28 +1,28 @@
 """
+    Abero
     (c) 2020 Rodney Maniego Jr.
     File analysis tool
 """
-
-VERSION = "1.2.1"
-
-print(f"\nAbero v{VERSION}")
-
-print("\nLoading requirements...")
-print("Please wait...")
 
 import os
 import re
 import sys
 import zipfile
-import argparse
 from statistics import mean
 from itertools import groupby
 
 from arkivist import Arkivist
 
-print("Done.")
+VERSION = "1.2.1"
 
 def analyze(directory, extension="txt", threshold=80, template=None, skipnames=0, group=0, unzip=0, reset=0):
+
+    if not check_path(directory):
+        print(f"\nAberoError: The directory was not found: {directory}")
+        sys.exit(0)
+    
+    if not check_path(f"{directory}/abero"):
+        os.makedirs(f"{directory}/abero")
     
     if not isinstance(directory, str):
         print("\nAberoError: 'directory' parameter must be a string.")
@@ -55,8 +55,6 @@ def analyze(directory, extension="txt", threshold=80, template=None, skipnames=0
     
     if unzip == 1:
         print("\nUnzipping files:")
-        if not check_path(f"{directory}"):
-            os.makedirs(f"{directory}")
         for filename in get_filenames(directory, "zip"):
             print(f" - {filename}")
             extract(f"{directory}/{filename}", f"{directory}")
@@ -68,7 +66,7 @@ def analyze(directory, extension="txt", threshold=80, template=None, skipnames=0
         template_filename = template.split("\\")[-1:][0]
 
     # extensions = extensions.split(",")
-    analysis = Arkivist(f"{directory}/analysis.json")
+    analysis = Arkivist(f"{directory}/abero/analysis.json")
     if reset == 1:
         analysis.clear()
     filenames = get_filenames(f"{directory}", extension)
@@ -269,6 +267,7 @@ def extract(path, destination):
 
 def common_string(original, compare, reverse=False):
     if reverse:
+        extension = list(original.split("."))[-1]
         original = "".join(list(reversed(original.replace(f".{extension}", "").strip())))
         compare = "".join(list(reversed(compare.replace(f".{extension}", "").strip())))
     common = []
@@ -282,7 +281,7 @@ def common_string(original, compare, reverse=False):
     return "".join(common)
 
 
-def default(value, minimum, maximum, fallback):
+def defaults(value, minimum, maximum, fallback):
     if value is not None:
         if not (minimum <= value <= maximum):
             return fallback
@@ -304,94 +303,3 @@ def get_filenames(path, extension):
         if filepath.split(".")[-1].lower() == extension:
             filenames.append(filepath)
     return filenames
-
-
-################
-# abero logic  #
-################
-parser = argparse.ArgumentParser(prog="abero",
-                                 description="Similarity analyzer.")
-parser.add_argument("-d",
-                    "--directory",
-                    metavar="directory",
-                    type=str,
-                    help="Directory of the files.",
-                    required=True)
-
-parser.add_argument("-e",
-                    "--extension",
-                    metavar="extension",
-                    type=str,
-                    help="Allowed file extension to be analyzed.")
-
-parser.add_argument("-c",
-                    "--control",
-                    metavar="control",
-                    type=str,
-                    help="Filepath of the control file.")
-
-parser.add_argument("-t",
-                    "--threshold",
-                    metavar="threshold",
-                    type=int,
-                    help="Tolerance level for the analysis data.")
-
-parser.add_argument("-u",
-                    "--unzip",
-                    metavar="unzip",
-                    type=int,
-                    help="Unzip flag")
-
-parser.add_argument("-s",
-                    "--skipnames",
-                    metavar="skipnames",
-                    type=int,
-                    help="Skip files with common filenames.")
-
-parser.add_argument("-g",
-                    "--group",
-                    metavar="group",
-                    type=int,
-                    help="Only compare when files has the same unique identifier.")
-
-parser.add_argument("-r",
-                    "--reset",
-                    metavar="reset",
-                    type=int,
-                    help="Reset data before analyzing files.")
-
-args = parser.parse_args()
-
-# get submissions directory
-directory = args.directory
-if not check_path(directory):
-    print(f"\nAberoError: The directory was not found: {directory}")
-    sys.exit(0)
-
-extension = args.extension
-if extension is None:
-    extension = "txt"
-
-# set the threshold level
-threshold = default(args.threshold, 1, 100, 80)
-
-# get template path
-template = args.control
-if template is not None:
-    if not check_path(template):
-        print(f"\nAberoWarning: File was not found: {template}")
-        template = None
-
-# set the skip names flag
-skipnames = default(args.skipnames, 0, 1, 0)
-
-# set the group flag
-group = default(args.group, 0, 1, 0)
-
-# set the unzip flag
-unzip = default(args.unzip, 0, 1, 0)
-
-# set the clear data flag
-reset = default(args.reset, 0, 1, 0)
-
-analyze(directory, extension=extension, threshold=threshold, template=template, skipnames=skipnames, group=group, unzip=unzip, reset=reset)
