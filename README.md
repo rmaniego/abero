@@ -1,23 +1,30 @@
 ![](/resources/banner.png)
 
-# abero
+# runner
 Analyze multiple files for similarity and/or uniqueness.
-Finding similarities of works duplicated from one or more part of different works to create a seemingly unique one can be difficult because of different strategies being used, but this can be done better with a software like Abero.
+Finding similarities of works duplicated from one or more part of different works to create a seemingly unique one can be difficult because of different strategies being used, but this can be done better with a software like runner.
 
 ## Requirements
 - [Arkivist](https://pypi.org/project/arkivist/) `pip install arkivist`
 
-## Lexicon
-[W3Schools / Python](https://www.w3schools.com/python/)
-[Python 3.9.5 Documentation](https://docs.python.org/3/download.html)
-[first20hours / google-10000-english](https://github.com/first20hours/google-10000-english)
-[Wikipedia Word Frequency](https://raw.githubusercontent.com/IlyaSemenov/wikipedia-word-frequency/master/results/enwiki-20190320-words-frequency.txt)
-
 ## Usage
+Install the latest abero package, upcoming versions might introduce unannounced changes, so a virtual environment is a must have before installation.
 ```bash
-# usage: abero [-h] -d directory [-e extension] [-c control] [-t threshold] [-u unzip] [-s skipnames] [-g group] [-r reset]
+pip install -U abero
+```
 
-py abero.py -d "<path_to_files>" -e "txt" -c "<path_to_control_file>" -t 1 -u 1 -s 1 -r 1
+To integrate abero into your Python codes, check the code snippet below:
+```python
+import abero
+
+abero.analyze(directory, extension="txt", threshold=80, template=None, skipnames=0, group=0, unzip=0, reset=0)
+```
+
+## CLI Usage
+```bash
+# usage: runner [-h] -d directory [-e extension] [-c control] [-t threshold] [-u unzip] [-s skipnames] [-g group] [-r reset]
+
+py runner.py -d "<path_to_files>" -e "txt" -c "<path_to_control_file>" -t 1 -u 1 -s 1 -r 1
 ```
 
 **1.** `-d <path>` - Full path of the dirctory containing the files to analyze.
@@ -41,4 +48,4 @@ Control file contains words or phrases, checked line-by-line, that are deem allo
 - [ ] Diff tool, content viewer
 
 ## Did you know?
-The repository name `abero` was inspired from the words aberrant and abero (Latin), which may mean deviating or being absent.
+The repository name `runner` was inspired from the words aberrant and runner (Latin), which may mean deviating or being absent.
