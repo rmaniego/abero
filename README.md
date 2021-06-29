@@ -48,4 +48,4 @@ Control file contains words or phrases, checked line-by-line, that are deem allo
 - [ ] Diff tool, content viewer
 
 ## Did you know?
-The repository name `runner` was inspired from the words aberrant and runner (Latin), which may mean deviating or being absent.
+The repository name `abero` was inspired from the words aberrant and runner (Latin), which may mean deviating or being absent.
