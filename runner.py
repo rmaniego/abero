@@ -4,7 +4,6 @@
     File analysis tool
 """
 
-import os
 import sys
 import argparse
 
@@ -93,7 +92,7 @@ if template is not None:
 skipnames = abero.defaults(args.skipnames, 0, 1, 0)
 
 # set the group flag
-group = abero.defaults(args.group, 0, 1, 0)
+group = abero.defaults(args.group, 0, 1, 1)
 
 # set the unzip flag
 unzip = abero.defaults(args.unzip, 0, 1, 0)

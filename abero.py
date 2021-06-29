@@ -115,19 +115,19 @@ def analyze(directory, extension="txt", threshold=80, template=None, skipnames=0
         if metadata.get("text", -1) == 1:
             duplication = [0]
             control_avg = average(list(control.values()), threshold)
-            for compare, result in duplicates.items():
-                if compare != "template":
+            for uid, result in duplicates.items():
+                if uid != "template":
                     avg = average(list(result.values()), threshold)
                     avg = avg - control_avg
                     if avg > 0:
                         duplication.append(avg)
-                        print(f" - {avg:.2f}% {compare}")
+                        print(f" - {avg:.2f}% {uid}")
             originality = (100 - max(duplication))
         else:
             duplication = [0]
             control_matches = duplicates.get("template", {}).get("matches", [])
-            for compare, result in duplicates.items():
-                if compare != "template":
+            for uid, result in duplicates.items():
+                if uid != "template":
                     duplicated = []
                     matches = result.get("matches", [])
                     duplicated = [x for x in matches if x not in control_matches]

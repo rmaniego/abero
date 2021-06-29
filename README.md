@@ -26,7 +26,7 @@ py abero.py -d "<path_to_files>" -e "txt" -c "<path_to_control_file>" -t 1 -u 1 
 **3.** `-t <*.csv>` - Tolerance level for uniqueness (1-100; default = 0)
 **4.** `-u <0>` - Unzip/extract ZIP files (0-1; default = 0)
 **5.** `-s <0>` - Skip files with common names (0-1; default = 0)
-**6.** `-g <0>` - Only compare if files contains the same identifier (0-1; default = 0)
+**6.** `-g <1>` - Only compare if files contains the same identifier (0-1; default = 1)
 &emsp; **Example:** student1`_set1`.py >> student2`_set1`.py
 **7.** `-r <0>` - Reset analytics before execution (0-1; default = 0)
 
