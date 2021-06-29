@@ -1,3 +1,23 @@
+Metadata-Version: 2.1
+Name: abero
+Version: 1.0.0
+Summary: Analyze multiple files for similarity and/or uniqueness.
+Home-page: https://github.com/rmaniego/abero
+Author: Rodney Maniego Jr.
+Author-email: rod.maniego23@gmail.com
+License: MIT
+Download-URL: https://github.com/rmaniego/abero/archive/v1.0.tar.gz
+Keywords: Python,similarity,diff,compare,files
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Build Tools
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
 ![](/resources/banner.png)
 
 # runner
@@ -27,15 +47,15 @@ abero.analyze(directory, extension="txt", threshold=80, template=None, skipnames
 py runner.py -d "<path_to_files>" -e "txt" -c "<path_to_control_file>" -t 1 -u 1 -s 1 -r 1
 ```
 
-1. `-d <path>` - Full path of the dirctory containing the files to analyze.
-2. `-e <txt>` - List of allowed file extensions to analyze.
-3. `-c <*.txt>` - Full path of the control file.
-4. `-t <*.csv>` - Tolerance level for uniqueness (1-100; default = 0)
-5. `-u <0>` - Unzip/extract ZIP files (0-1; default = 0)
-6. `-s <0>` - Skip files with common names (0-1; default = 0)
-7. `-g <1>` - Only compare if files contains the same identifier (0-1; default = 1)
+**1.** `-d <path>` - Full path of the dirctory containing the files to analyze.
+**1.** `-e <txt>` - List of allowed file extensions to analyze.
+**2.** `-c <*.txt>` - Full path of the control file.
+**3.** `-t <*.csv>` - Tolerance level for uniqueness (1-100; default = 0)
+**4.** `-u <0>` - Unzip/extract ZIP files (0-1; default = 0)
+**5.** `-s <0>` - Skip files with common names (0-1; default = 0)
+**6.** `-g <1>` - Only compare if files contains the same identifier (0-1; default = 1)
 &emsp; **Example:** student1`_set1`.py >> student2`_set1`.py
-8. `-r <0>` - Reset analytics before execution (0-1; default = 0)
+**7.** `-r <0>` - Reset analytics before execution (0-1; default = 0)
 
 ## Control File
 Control file contains words or phrases, checked line-by-line, that are deem allowed to be contained in all files to analyzed; therefore, if found on the test files, it will not be flagged as duplicate work.
@@ -49,3 +69,5 @@ Control file contains words or phrases, checked line-by-line, that are deem allo
 
 ## Did you know?
 The repository name `runner` was inspired from the words aberrant and runner (Latin), which may mean deviating or being absent.
+
+
