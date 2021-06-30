@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
 setuptools.setup(
     name = 'abero',
     packages = ["abero"],
-    version = '1.0.0',
+    version = '1.0.1',
     license='MIT',
     description = 'Analyze multiple files for similarity and/or uniqueness.',
     long_description=long_description,

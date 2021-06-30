@@ -13,7 +13,6 @@ from itertools import groupby
 
 from arkivist import Arkivist
 
-VERSION = "1.2.1"
 
 def analyze(directory, extension="txt", threshold=80, template=None, skipnames=0, group=0, unzip=0, reset=0):
 
