@@ -30,11 +30,13 @@ py runner.py -d "<path_to_files>" -e "txt" -c "<path_to_control_file>" -t 1 -u 1
 1. `-d <path>` - Full path of the dirctory containing the files to analyze.
 2. `-e <txt>` - List of allowed file extensions to analyze.
 3. `-c <*.txt>` - Full path of the control file.
-4. `-t <*.csv>` - Tolerance level for uniqueness (1-100; default = 0)
+4. `-t <80>` - Threshold level for uniqueness, treats similarity below threshold as unique (1-100; default = 0)
 5. `-u <0>` - Unzip/extract ZIP files (0-1; default = 0)
 6. `-s <0>` - Skip files with common names (0-1; default = 0)
 7. `-g <1>` - Only compare if files contains the same identifier (0-1; default = 1)
-&emsp; **Example:** student1`_set1`.py >> student2`_set1`.py
+
+&emsp; **Example:** student1*_set1*.py >> student2*_set1*.py
+
 8. `-r <0>` - Reset analytics before execution (0-1; default = 0)
 
 ## Control File

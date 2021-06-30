@@ -13,5 +13,6 @@ abero.egg-info/SOURCES.txt
 abero.egg-info/dependency_links.txt
 abero.egg-info/requires.txt
 abero.egg-info/top_level.txt
+abero/__pycache__/abero.cpython-39.pyc
 resources/banner.png
 resources/extensions.json
