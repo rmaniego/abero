@@ -14,7 +14,7 @@ from itertools import groupby
 from arkivist import Arkivist
 
 
-def analyze(directory, extension="txt", threshold=80, template=None, skipnames=0, group=0, unzip=0, reset=0):
+def analyze(directory, extension="txt", threshold=80, template=None, skipnames=0, group=0, unzip=0, convert=0, reset=0):
 
     if not check_path(directory):
         print(f"\nAberoError: The directory was not found: {directory}")
@@ -31,19 +31,27 @@ def analyze(directory, extension="txt", threshold=80, template=None, skipnames=0
         print("\nAberoWarning: 'extension' parameter must be a string.")
     
     text_based = -1
-    extensions = Arkivist("resources/extensions.json")
-    if extension in extensions.get("text", ["txt"]):
+    extensions_text = ["html", "xml", "css", "svg", "json", "c", "cpp", "h", "cs", "js", "py",
+                       "java", "rb", "pl", "php", "sh", "txt", "tex", "markdown", "asciidoc",
+                       "rtf", "ps", "ini", "cfg", "rc", "reg", "csv", "tsv"]
+    extensions_binary = ["jpg", "png", "gif", "bmp", "tiff", "psd", "mp4", "mkv", "avi", "mov",
+                         "mpg", "vob", "mp3", "aac", "wav", "flac", "ogg", "mka", "wma", "pdf", "doc",
+                         "xls", "ppt", "docx", "odt", "zip", "rar", "7z", "tar", "iso", "mdb", "accde",
+                         "frm", "sqlite", "exe", "dll", "so", "class"]
+    if extension in extensions_text:
         text_based = 1
-    elif extension in extensions.get("binary", []):
+    elif extension in extensions_binary:
         text_based = 0
         print(f"AberoWarning: The `{extension}` is a binary file, a separate analyzer will be used.")
     else:
-        print(f"AberoWarning: The `{extension}` is currently unsupported for analysis, errors might be encountered during execution.")
+        print(f"AberoWarning: The `{extension}` is currently unsupported for analysis," \
+        "errors might be encountered during execution.")
 
     threshold = validate(threshold, 1, 100, 80)
     skipnames = validate(skipnames, 0, 1, 0)
     group = validate(group, 0, 1, 0)
     unzip = validate(unzip, 0, 1, 0)
+    convert = validate(convert, 0, 1, 0)
     reset = validate(reset, 0, 1, 0)
     
     template_filename = ""
@@ -57,6 +65,12 @@ def analyze(directory, extension="txt", threshold=80, template=None, skipnames=0
         for filename in get_filenames(directory, "zip"):
             print(f" - {filename}")
             extract(f"{directory}/{filename}", f"{directory}")
+    
+    if convert == 1:
+        print("\nConverting notebooks:")
+        for filename in get_filenames(directory, "ipynb"):
+            print(f" - {filename}")
+            ipynb2py(f"{directory}/{filename}")
 
     print("\nAnalyzing files...")
     
@@ -64,7 +78,6 @@ def analyze(directory, extension="txt", threshold=80, template=None, skipnames=0
     if template is not None:
         template_filename = template.split("\\")[-1:][0]
 
-    # extensions = extensions.split(",")
     analysis = Arkivist(f"{directory}/abero/analysis.json")
     if reset == 1:
         analysis.clear()
@@ -247,12 +260,30 @@ def difference(diff, words):
                     diff.remove(item)
     return diff
 
+def ipynb2py(filepath):
+    script = []
+    ipynb = Arkivist(filepath).show()
+    for cell in ipynb.get("cells", []):
+        cell_type = cell.get("cell_type", "")
+        outputs = cell.get("outputs", [])
+        source = cell.get("source", [])
+        
+        if cell_type == "code" and len(outputs) > 0:
+            for line in source:
+                script.append(line)
+        else:
+            script.append(f"# {line}")
+    new_filepath = filepath.replace(".ipynb", ".py")
+    with open(new_filepath, "w+", encoding="utf-8") as file:
+        file.wrtie("\n".join(script))
+        
+
 def validate(value, minimum, maximum, fallback):
     if not isinstance(value, int):
         print("KymeraWarning: Parameter must be an integer.")
         value = int(fallback)
     if not (minimum <= value <= maximum):
-        print(f"KymeraWarning: Parameter must be an integer between {minimum}-{maximum}.")
+        print(f"AberoWarning: Parameter must be an integer between {minimum}-{maximum}.")
         value = int(fallback)
     return value
 

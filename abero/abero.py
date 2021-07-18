@@ -271,11 +271,15 @@ def ipynb2py(filepath):
         if cell_type == "code" and len(outputs) > 0:
             for line in source:
                 script.append(line)
+            for line in outputs[0].get("text", 0):
+                script.append(f"# {line}")
         else:
-            script.append(f"# {line}")
+            for line in source:
+                script.append(f"# {line}")
     new_filepath = filepath.replace(".ipynb", ".py")
     with open(new_filepath, "w+", encoding="utf-8") as file:
-        file.wrtie("\n".join(script))
+        if len(script) > 0:
+            file.write("\n".join(script))
         
 
 def validate(value, minimum, maximum, fallback):
